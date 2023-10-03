@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from city import City
 
 
 #return soup of an url after request
@@ -39,6 +40,22 @@ def fetch_url_list(url, headers=None):
 
     return url_list
     
+#convert the data with unit into int type
+def format(data):
+
+    formatted_data = None
+    try:
+        formatted_data = int(data)
+    except:
+        try:
+            formatted_data = int(data[:-1])
+        except:
+            try:
+                formatted_data = int(data[:-2])
+            except:
+                pass
+    return formatted_data
+        
 
 #fetch 15d weather forcast of city
 #input:url of city
@@ -56,12 +73,9 @@ def fetch_15d_forecast(city_url):
         date = li.find('h1').text
         tem = li.find(attrs={'class': 'tem'})
         try: 
-            high, low = [int(i) for i in tem.text[:-2].split('/')]
+            high, low = [format(i) for i in tem.text.split('/')]
         except:
-            try:
-                high = low = int(tem.text[:-2])
-            except:
-                high, low = [int(i[:-2]) for i in tem.text.split('/')]
+            high = low = format(tem.text)
         city_dict[date] = (high, low)
 
     #fetch 8-15d forcast
@@ -78,7 +92,7 @@ def fetch_15d_forecast(city_url):
         date = day + '（' + weekday + '）'
 
         tem = li.find(attrs={'class': 'tem'})
-        high, low = [int(i[:-1]) for i in tem.text.split('/')]
+        high, low = [format(i) for i in tem.text.split('/')]
         city_dict[date] = (high, low)
 
     # print(city_dict)
@@ -99,4 +113,16 @@ def fetch_15d_forcast_dict(url_list):
         _15d_forecast_dict = fetch_15d_forecast(url)
         forcast_dict[city] = _15d_forecast_dict
 
-    print(forcast_dict)
+    # print(forcast_dict)
+    return forcast_dict
+
+
+#return city list containing 15d temperature info
+def get_city_list(url_list):
+    
+    city_dict = fetch_15d_forcast_dict(url_list)
+    city_list = []
+    for name, info_dict in city_dict.items():
+        city_list.append(City(name, info_dict))
+
+    return city_list
