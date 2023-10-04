@@ -1,28 +1,17 @@
-import requests
-from bs4 import BeautifulSoup
+import os
+from dataprocess import souped
 from city import City
 
-
-#return soup of an url after request
-#input:url
-#output:soup of a html
-def souped(url, headers=None):
-
-    response = requests.get(url, headers=headers)
-    response.encoding = 'utf-8'
-    html = response.text
-
-    soup = BeautifulSoup(html, features='lxml')
-    return soup
 
 
 #fetch the list of weather forcast url for every city in Anhui
 #input: the html of website
 #output: a list of package with city name and its own url
 #format:[(city, url), ...]
-def fetch_url_list(url, headers=None):
+def fetch_url_list():
     
-    soup = souped(url, headers=headers)
+    url = 'http://www.weather.com.cn/html/province/anhui.shtml'
+    soup = souped(url)
     #find all weather forcast websites for every city and pack them
     url_list = []
     for dl in soup.find(id='forecastID'):
@@ -39,90 +28,46 @@ def fetch_url_list(url, headers=None):
             pass
 
     return url_list
-    
-#convert the data with unit into int type
-def format(data):
 
-    formatted_data = None
-    try:
-        formatted_data = int(data)
-    except:
-        try:
-            formatted_data = int(data[:-1])
-        except:
-            try:
-                formatted_data = int(data[:-2])
-            except:
-                pass
-    return formatted_data
-        
-
-#fetch 15d weather forcast of city
-#input:url of city
-#output: dict of highest and lowest temperature by key 'date'
-#format: {date: (high, low), ...}
-def fetch_15d_forecast(city_url):
-
-    city_dict = {}
-
-    #fetch 7d forcast
-    soup = souped(city_url)
-    ul = soup.find(attrs={'class': 't clearfix'})
-    
-    for li in ul.find_all('li'):
-        date = li.find('h1').text
-        tem = li.find(attrs={'class': 'tem'})
-        try: 
-            high, low = [format(i) for i in tem.text.split('/')]
-        except:
-            high = low = format(tem.text)
-        city_dict[date] = (high, low)
-
-    #fetch 8-15d forcast
-    #as for the 8-15d forcast is in another page, we should reshape url to
-    #get new data
-    city_url = city_url.replace('/weather', '/weather15d')
-    soup = souped(city_url)
-    ul = soup.find(attrs={'class': 't clearfix'})
-    
-    for li in ul.find_all('li'):
-        date = li.find(attrs={'class': 'time'}).text
-        #normalize date format
-        weekday, day = date[:-1].split('（')
-        date = day + '（' + weekday + '）'
-
-        tem = li.find(attrs={'class': 'tem'})
-        high, low = [format(i) for i in tem.text.split('/')]
-        city_dict[date] = (high, low)
-
-    # print(city_dict)
-
-    return city_dict
-
-
-#return 15d weather forcast for city in url_list
-#input: url_list
-#output:dict of temperature forcast
-#format: {city: _15d_forcast_dict, ...}
-def fetch_15d_forcast_dict(url_list):
-    
-    forcast_dict = {}
-
-    for city, url in url_list:
-        print(city, url)
-        _15d_forecast_dict = fetch_15d_forecast(url)
-        forcast_dict[city] = _15d_forecast_dict
-
-    # print(forcast_dict)
-    return forcast_dict
 
 
 #return city list containing 15d temperature info
 def get_city_list(url_list):
     
-    city_dict = fetch_15d_forcast_dict(url_list)
+    url_list = fetch_url_list()
     city_list = []
-    for name, info_dict in city_dict.items():
-        city_list.append(City(name, info_dict))
+    
+    #create the city list
+    for cityname, url in url_list:
+        newcity = City(cityname, url)
+        #fetch the 15d forcast for every city
+        newcity.fetch_15d_forecast()
+        print('obtaining city: %s' % newcity.name)
+        city_list.append(newcity)
 
     return city_list
+
+
+
+#save the data from city list to csv
+#input:the list of city class
+#output:a csv file, headers: name temperature hightemp lowtemp
+def save_to_csvfile(city_list):
+
+    folderpath = os.getcwd() + '\\data\\'
+
+    for city in city_list:
+        city.save(folderpath)
+
+
+
+#get the temperature data and save to csv files
+#input: None
+#output:csv files
+def get_data_and_save():
+
+    #get data from url
+    url_list = fetch_url_list()
+    city_list = get_city_list(url_list)
+    #save csv files
+    save_to_csvfile(city_list)
