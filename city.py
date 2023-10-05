@@ -1,6 +1,9 @@
 import os
 import csv
+from pyecharts.charts import Map, Timeline, Grid
+from pyecharts import options as opts
 from dataprocess import format, souped
+import webbrowser
 
 
 #this class contains infomation of temperature for a certain city
@@ -101,6 +104,27 @@ class Province():
         self.name = name
         #cities list
         self.cities = list()
+        #map chart initialization
+        self.map_chart = Map(init_opts=opts.InitOpts(width="1000px", height="600px", theme='white'))
+        self.map_chart.set_global_opts(
+                title_opts=opts.TitleOpts(
+                    title="%s省15天温度预报图" % self.name,
+                    pos_top="2%",
+                    pos_left="2%",
+                    title_textstyle_opts=opts.TextStyleOpts(font_size=24,color="#1f1e33")
+                ),
+                legend_opts=opts.LegendOpts(is_show=True, pos_top="40px", pos_right="30px"),
+                tooltip_opts=opts.TooltipOpts(
+                    is_show=True,
+                ),
+                visualmap_opts=opts.VisualMapOpts(
+                    is_calculable=True,
+                    pos_left="5%",
+                    pos_top="center",
+                    min_=10,
+                    max_=35,
+                ),
+            )
 
 
     #add a new city to the province
@@ -140,10 +164,109 @@ class Province():
         for filename in filenames:
             newpath = filepath + filename
             self.csv_add(newpath)
+        
 
 
+    
+    #return date list
+    def datelist(self):
+
+        return self.cities[0].date
 
 
-    #show the data of temperature of province
-    def show(self):
-        pass
+    #get city high temperature information in one day
+    #output:a list of name and temperature
+    #format:[(name, temperature), ...]
+    def hightemplist(self, date):
+        
+        hightemp_list = list()
+        for city in self.cities:
+            index = city.date.index(date)
+            hightemp_list.append((city.name, city.hightemp[index]))
+
+        return hightemp_list
+
+
+    #get city low temperature information in one day
+    #output:a list of name and temperature
+    #format:[(name, temperature), ...]
+    def lowtemplist(self, date):
+        
+        lowtemp_list = list()
+        for city in self.cities:
+            index = city.date.index(date)
+            lowtemp_list.append((city.name, city.lowtemp[index]))
+
+        return lowtemp_list
+
+
+    #add a map chart of temperature
+    def add_map_chart(self, datalist, series_name=""):
+
+        self.map_chart.add(
+            series_name=series_name,
+            data_pair=datalist,
+            maptype=self.name,
+            zoom=1,
+            is_map_symbol_show=True,
+            label_opts=opts.LabelOpts(is_show=True),
+        )
+
+
+    #reinitialize map chart
+    def readd_map_chart(self, datalist, series_name=""):
+
+        self.map_chart = (
+            Map(init_opts=opts.InitOpts(width="1000px", height="600px", theme='white'))
+            .set_global_opts(
+                    title_opts=opts.TitleOpts(
+                        title="%s省15天温度预报图" % self.name,
+                        pos_top="2%",
+                        pos_left="2%",
+                        title_textstyle_opts=opts.TextStyleOpts(font_size=24,color="#1f1e33")
+                    ),
+                    legend_opts=opts.LegendOpts(is_show=True, pos_top="40px", pos_right="30px"),
+                    tooltip_opts=opts.TooltipOpts(
+                        is_show=True,
+                    ),
+                    visualmap_opts=opts.VisualMapOpts(
+                        is_calculable=True,
+                        pos_left="5%",
+                        pos_top="center",
+                        min_=10,
+                        max_=35,
+                    ),
+                )
+        )
+
+        self.add_map_chart(datalist, series_name)
+
+
+    #show the timeline map of temperature of province
+    def show(self): 
+        
+        #setup the timeline
+        timeline = Timeline(init_opts=opts.InitOpts(width="1400px", height="600px"))
+        series_name = "最高温度"
+
+        for date in self.datelist():
+            #add temperature map for date
+            self.readd_map_chart(self.hightemplist(date), series_name)
+
+            timeline.add(self.map_chart, date)
+            timeline.add_schema(
+            is_timeline_show=True,
+            is_auto_play=False,
+            is_inverse=False,
+            play_interval=1500,
+            pos_left="center",
+            pos_right="right",
+            pos_bottom='2%',
+            is_loop_play=False
+            )
+
+        html_name = "%s省%s地图.html" % (self.name, series_name)
+        timeline.render(html_name)
+
+        webbrowser.open(html_name)
+

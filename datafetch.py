@@ -1,6 +1,7 @@
 import os
 from dataprocess import souped
 from city import City
+from pypinyin import lazy_pinyin
 
 
 
@@ -8,9 +9,10 @@ from city import City
 #input: the html of website
 #output: a list of package with city name and its own url
 #format:[(city, url), ...]
-def fetch_url_list():
+def fetch_url_list(name):
     
-    url = 'http://www.weather.com.cn/html/province/anhui.shtml'
+    pinyin_name = ''.join(lazy_pinyin(name))
+    url = 'http://www.weather.com.cn/html/province/%s.shtml' % pinyin_name
     soup = souped(url)
     #find all weather forcast websites for every city and pack them
     url_list = []
@@ -34,8 +36,7 @@ def fetch_url_list():
 #return city list containing 15d temperature info
 def get_city_list(url_list):
     
-    url_list = fetch_url_list()
-    city_list = []
+    city_list = list()
     
     #create the city list
     for cityname, url in url_list:
@@ -62,10 +63,10 @@ def save_to_csvfile(city_list, folderpath=os.getcwd()):
 #get the temperature data and save to csv files
 #input: None
 #output:csv files
-def get_data_and_save(folderpath=os.getcwd()):
+def get_data_and_save(province_name, folderpath=os.getcwd()):
 
     #get data from url
-    url_list = fetch_url_list()
+    url_list = fetch_url_list(province_name)
     city_list = get_city_list(url_list)
     #save csv files
     save_to_csvfile(city_list, folderpath)
