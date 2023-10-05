@@ -12,6 +12,10 @@ from pypinyin import lazy_pinyin
 def fetch_url_list(name):
     
     pinyin_name = ''.join(lazy_pinyin(name))
+    #because "山西" and "陕西" shares the same pinyin, special name should be used
+    if name == '陕西':
+        pinyin_name = 'shan-xi'
+
     url = 'http://www.weather.com.cn/html/province/%s.shtml' % pinyin_name
     soup = souped(url)
     #find all weather forcast websites for every city and pack them
