@@ -8,18 +8,18 @@ from dataprocess import format, souped
 class City():
 
     #initialization City class
-    def __init__(self, name, url):
+    def __init__(self, name, url=None):
 
         self.name = name
         self.url = url
-        self.info_dict = {}
+        self.info_dict = dict()
 
         #the list of date
-        self.date = None
+        self.date = list()
         #list of high/low temperature
-        self.temp = None
+        self.temp = list()
         #list of high temperature and low temperautre
-        self.hightemp, self.lowtemp = None, None
+        self.hightemp, self.lowtemp = list(), list()
 
 
 
@@ -45,7 +45,7 @@ class City():
 
     
         #fetch 8-15d forcast
-        #as for the 8-15d forcast is in another page, we should reshape url to
+        #for the 8-15d forcast is in another page, we should reshape url to
         #get new data
         new_city_url = self.url.replace('/weather', '/weather15d')
         soup = souped(new_city_url)
@@ -87,3 +87,63 @@ class City():
             writer.writerows(zip(self.date, self.temp, self.hightemp, self.lowtemp))
     
             print("file '%s' created." % filename)
+
+
+
+
+#this class contains cities in a province
+class Province():
+    
+    #initialization
+    def __init__(self, name):
+        
+        #province name
+        self.name = name
+        #cities list
+        self.cities = list()
+
+
+    #add a new city to the province
+    def add(self, city):
+        
+        self.cities.append(city)
+
+
+    #add a new city through csv file
+    #if the file is not csv or csv with invalid type, this method won't add anything
+    def csv_add(self, filepath):
+        
+        filename = os.path.basename(filepath)
+        try:
+            city_name = filename[:-8]
+            new_city = City(city_name)
+
+            #open csv file
+            with open(filepath, 'r', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    new_city.date.append(row['date'])
+                    new_city.temp.append(eval(row['temperature']))
+                    new_city.hightemp.append(eval(row['hightemp']))
+                    new_city.lowtemp.append(eval(row['lowtemp']))
+
+            self.cities.append(new_city)
+        except:
+            print('Invalid type!')
+
+
+
+    #add all cities the filepath contains in csv files
+    def csv_add_all(self, filepath):
+
+        filenames = os.listdir(filepath)
+        for filename in filenames:
+            newpath = filepath + filename
+            self.csv_add(newpath)
+
+
+
+
+    #show the data of temperature of province
+    def show(self):
+        pass

@@ -41,8 +41,8 @@ def get_city_list(url_list):
     for cityname, url in url_list:
         newcity = City(cityname, url)
         #fetch the 15d forcast for every city
-        newcity.fetch_15d_forecast()
         print('obtaining city: %s' % newcity.name)
+        newcity.fetch_15d_forecast()
         city_list.append(newcity)
 
     return city_list
@@ -52,9 +52,7 @@ def get_city_list(url_list):
 #save the data from city list to csv
 #input:the list of city class
 #output:a csv file, headers: name temperature hightemp lowtemp
-def save_to_csvfile(city_list):
-
-    folderpath = os.getcwd() + '\\data\\'
+def save_to_csvfile(city_list, folderpath=os.getcwd()):
 
     for city in city_list:
         city.save(folderpath)
@@ -64,10 +62,10 @@ def save_to_csvfile(city_list):
 #get the temperature data and save to csv files
 #input: None
 #output:csv files
-def get_data_and_save():
+def get_data_and_save(folderpath=os.getcwd()):
 
     #get data from url
     url_list = fetch_url_list()
     city_list = get_city_list(url_list)
     #save csv files
-    save_to_csvfile(city_list)
+    save_to_csvfile(city_list, folderpath)
