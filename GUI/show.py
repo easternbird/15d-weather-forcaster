@@ -19,6 +19,7 @@ class MyWindow():
     def __init__(self, title):
         
         self.title = title
+        #create a window
         self.root = ttk.Window(title=title)
 
         #button list
@@ -36,22 +37,14 @@ class MyWindow():
 
 
     #show message on main window
-    def show_message(self, text, row=None, column=None):
+    def show_message(self, text, row=None, column=None, padx=None, pady=None):
 
         if self.root:
             message = ttk.Label(self.root, text=text)
-            message.grid(row=row, column=column)
+            message.grid(row=row, column=column, padx=padx, pady=pady)
 
-
-
-
-    def add_message(self, text, row=None, column=None, padx=None, pady=None):
-        #set text and combobox
-        message = ttk.Label(self.root, text=text)
-        message.grid(row=row, column=column, padx=padx, pady=pady)
-
-
-    
+        
+    #add a combobox on main window
     def add_combobox(self, row=None, column=None, columnspan=None, padx=None, pady=None):
         self.combobox = ttk.Combobox(
                     master=self.root,
@@ -64,7 +57,7 @@ class MyWindow():
         self.combobox.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady)
 
     
-
+    #add a button on main window
     def add_button(self, text, row=None, column=None, columnspan=None, padx=None, pady=None, command=None):
 
         #initialize button
