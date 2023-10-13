@@ -37,7 +37,7 @@ if __name__ == '__main__':
     root = MyWindow(title="15日天气预报查询系统")
 
     #add message tips
-    root.add_message(text="请输入需要查询的省份：", row=0, column=0, padx=10)
+    root.show_message(text="请输入需要查询的省份：", row=0, column=0, padx=10)
     #add combobox
     root.add_combobox(row=0, column=1, columnspan=2, padx=10, pady=10)
     #add buttons
